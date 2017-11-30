@@ -1,7 +1,7 @@
 package Spiel;
 
 public enum Result {
-
-	GEWINEN, UNENTSCHIEDEN, NICHTFERTIG, ERROR;
 	
+	GEWONEN, UNENTSCHIEDEN, ERROR;
+
 }

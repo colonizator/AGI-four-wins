@@ -1,204 +1,130 @@
 package Spiel;
 
-import static Spiel.Result.*;
+public class LogicImplementierung implements Logic{
 
-public class LogicImplementierung implements Logic {
-
-	Chip spielfeld[][];
-	Result ergebnis;
 	
+	public Chip[][] field;
 
+	private InitialClasse gameType;
+	
 	public LogicImplementierung() {
-		spielfeld = new Chip[6][7];
-	}
-
-				
-		// Check if there is an element in the ROW
-				public boolean istZeileGefuelt() {
-					int zeile = 0;
-					while (zeile < 7) {
-						if (spielfeld[0][zeile] == null) {
-							return false;
-						}
-					}
-					return true;
-				}
-
-	// Check the result in a Row
-	public Result ergebnisInZeilePruefen(Chip chip, int spalte) {
-
-		if (istZeileGefuelt())
-			return UNENTSCHIEDEN;
-
-		for (int i = spielfeld.length - 1; i >= 0; i--) {
-			if (spielfeld[i][spalte] == chip) {
-				if (i >= spielfeld.length - 3) {
-					if (spielfeld[i - 1][spalte] == chip && spielfeld[i - 2][spalte] == chip
-							&& spielfeld[i - 3][spalte] == chip) {
-						return GEWINEN;
-					}
-				}
-			}
-		}
-
-		return NICHTFERTIG;
+		this.gameType = InitialClasse.FOURWINS;
+		field = new Chip[gameType.getCol()][gameType.getRows()];
 	}
 	
+	public LogicImplementierung(InitialClasse gameType) {
+		this.gameType = gameType;
+		field = new Chip[gameType.getCol()][gameType.getRows()];
+	}
 	
-	// Override the Vetical playing methode
 	@Override
-	public Result throwChipV(Chip chip, int spalte) {
-
-		
-		// Check Result in ROW
-		for (int i = spielfeld.length - 1; i >= 0; i--) {
-			if (spielfeld[i][spalte] == null) {
-				spielfeld[i][spalte] = chip;
-				i = -1;
+	public Result throwChip(Chip chip, int column) {
+		System.out.println(this.gameType.getCol());
+		if (column >= this.gameType.getCol() || column < 0)
+			return Result.ERROR;
+		int row = 0;
+		while (field[column][row] != null) {
+			if (++row >= this.gameType.getRows()) {
+				return Result.ERROR;
 			}
 		}
-		
-		ergebnis =  ergebnisInZeilePruefen(chip, spalte);
-		
-		if (ergebnis == GEWINEN) {
-			return ergebnis;
-		} else if (ergebnis == NICHTFERTIG) {
-			return ergebnis;
-		} else {
-			return UNENTSCHIEDEN;
+		field[column][row] = chip;
+
+		Result result = Result.UNENTSCHIEDEN;
+
+		result = checkFourInColumn(chip, column, row);
+
+		if (result != Result.GEWONEN) {
+			result = checkFourInRow(chip, column, row);
 		}
 
-		
-		
+		if (result != Result.GEWONEN) {
+			result = checkFourInDiagonal(chip, column, row);
+		}
+
+		return result;
 	}
 	
 
-	
-	// Check if there is an element in the Column
-		public boolean istSpalteGefuelt() {
-			int spalte = 0;
-			while (spalte < 7) {
-				if (spielfeld[spalte][0] == null) {
-					return false;
-				}
-			}
-			return true;
-		}
-	// Check the result in a column 
-	public Result ergebnisInSpaltenPruefen(Chip chip, int zeile) {
 
-		if (istSpalteGefuelt())
-			return UNENTSCHIEDEN;
-
-		for (int i = spielfeld.length - 1; i >= 0; i--) {
-			if (spielfeld[zeile][i] == chip) {
-				if (i >= spielfeld.length - 3) {
-					if (spielfeld[zeile][i-1] == chip && spielfeld[zeile][i-2] == chip
-							&& spielfeld[zeile][i-3] == chip) {
-						return GEWINEN;
-					}
+	private Result checkFourInRow(Chip chip, int column, int row) {
+		int foundChipsInRow = 0;
+		for (int i = 0; i < this.gameType.getCol(); i++) {
+			if (field[i][row] == chip) {
+				if (++foundChipsInRow >= this.gameType.getWon()) {
+					return Result.GEWONEN;
 				}
+			} else {
+				foundChipsInRow = 0;
 			}
 		}
-
-		return NICHTFERTIG;
+		return Result.UNENTSCHIEDEN;
 	}
 
-
-	
-
-	// Override the horizontal playing methode
-	@Override
-	public Result throwChipH(Chip chip, int zeile) {
-		//Check Result in Column
-				for (int i = spielfeld.length - 1; i >= 0; i--) {
-					if (spielfeld[zeile][i] == null) {
-						spielfeld[zeile][i] = chip;
-						i = -1;
-					}
+	private Result checkFourInColumn(Chip chip, int column, int row) {
+		int foundChipsInRow = 0;
+		for (int i = 0; i < this.gameType.getRows(); i++) {
+			if (field[column][i] == chip) {
+				if (++foundChipsInRow >= this.gameType.getWon()) {
+					return Result.GEWONEN;
 				}
-											
-				Result ergebnis = ergebnisInSpaltenPruefen(chip, zeile);
-				
-				if (ergebnis == GEWINEN) {
-					return ergebnis;
-				} else if (ergebnis == NICHTFERTIG) {
-					return ergebnis;
-				} else {
-					return UNENTSCHIEDEN;
-				}
-	}
-
-	
-	
-// Check if there is an element in the Fiel
-			public boolean istFeldGefuelt() {
-				int spalte = 0;
-				int zeile =0;
-				while (spalte < 7 || zeile < 6) {
-					if (spielfeld[spalte][zeile] == null) {
-						return false;
-					}
-				}
-				return true;
+			} else {
+				foundChipsInRow = 0;
 			}
-
-			
-			
-			/*
-			int offset is how many diagonals away from the middle diagonal the current diagonal is
-			int axis specifies on which side of the middle diagonal the current diagonal is
-			*/
-			public  Result ergebnisInFeldPruefen(Chip chip, int zeile, int spalte){
-				
-				int count = 0; //counts the diagonals
-				if (istFeldGefuelt())
-					return UNENTSCHIEDEN;
-
-				
-				for(int i = 0; i < spielfeld.length - 1; i++){
-					if(count == 4)
-						return GEWINEN;
-					
-					if(spielfeld[i+zeile][i+spalte] == chip)
-						count++;
-					else
-						count = 0;
-					return NICHTFERTIG;
-					
-				}
-				
-				return UNENTSCHIEDEN;
-				
-			}
-			
-		
-	@Override
-	public Result throwChipFeld(Chip chip, int zeile, int spalte) {
-
-//		
-//		if(ergebnisInFeldPruefen(chip, 1, 0, 1) == ergebnis)
-//			return NICHTFERTIG;
-//		if(ergebnisInFeldPruefen(chip, 0, 1, 1) == ergebnis)
-//			return NICHTFERTIG;
-//		if(ergebnisInFeldPruefen(spielfeld, chip, 0, 0, 0) == ergebnis)
-//			return GEWINEN;
-//	
-		
-		Result ergebnis = ergebnisInFeldPruefen(chip, zeile, spalte);
-		
-		if (ergebnis == GEWINEN) {
-			return ergebnis;
-		} else if (ergebnis == NICHTFERTIG) {
-			return ergebnis;
-		} else {
-			return UNENTSCHIEDEN;
 		}
+		return Result.UNENTSCHIEDEN;
+	}
+
+	private Result checkFourInDiagonal(Chip chip, int column, int row) {
+		int columnCheck = column;
+		int rowCheck = row;
+		Result result = Result.UNENTSCHIEDEN;
+
+		result = checkFourInDiagonalLeft(chip, columnCheck, rowCheck);
+		if (result != Result.GEWONEN) {
+			result = checkFourInDiagonalRight(chip, columnCheck, rowCheck);
+		}
+		return result;
+	}
+
+	private Result checkFourInDiagonalLeft(Chip chip, int columnCheck, int rowCheck) {
+		while (rowCheck > 0 && columnCheck > 0) {
+			rowCheck--;
+			columnCheck--;
+		}
+		int foundChipsInDiagonal = 0;
+		while (rowCheck < this.gameType.getRows() && columnCheck < this.gameType.getCol()) {
+			if (field[columnCheck][rowCheck] == chip) {
+				if (++foundChipsInDiagonal >= this.gameType.getWon()) {
+					return Result.GEWONEN;
+				}
+			} else {
+				foundChipsInDiagonal = 0;
+			}
+			rowCheck++;
+			columnCheck++;
+		}
+		return Result.UNENTSCHIEDEN;
 	}
 	
-	
-	
+	private Result checkFourInDiagonalRight(Chip chip, int columnCheck, int rowCheck) {
+		while (rowCheck < this.gameType.getRows() -1 && columnCheck > 0) {
+			rowCheck++;
+			columnCheck--;
+		}
+		int foundChipsInDiagonal = 0;
+		while (rowCheck >= 0 && columnCheck < this.gameType.getCol()) {
+			if (field[columnCheck][rowCheck] == chip) {
+				if (++foundChipsInDiagonal >= this.gameType.getWon()) {
+					return Result.GEWONEN;
+				}
+			} else {
+				foundChipsInDiagonal = 0;
+			}
+			rowCheck--;
+			columnCheck++;
+		}
+		return Result.UNENTSCHIEDEN;
+	}
 
-
-	
 }
